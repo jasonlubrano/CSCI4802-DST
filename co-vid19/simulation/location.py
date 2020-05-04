@@ -16,21 +16,22 @@ class Location:
 
     def location_info_updater(self):
         if(self.is_infected == True):
-            if(self.n_rolls_with_virus < self.max_rolls_with_virus):
+            if(self.n_rolls_with_virus <= self.max_rolls_with_virus):
                 self.n_rolls_with_virus = self.n_rolls_with_virus + 1
             else:
                 self.n_rolls_with_virus = 0
                 self.is_infected = False
 
 
-    def location_infection_roll(self):
+    def is_location_infection_roll(self):
         if(self.is_infected == True):
             pass
         else:
-            irate = 2 + 1
-            result = random.randint(1, irate)
+            result = random.randint(1, 3)
             if(result == 1):
-                self.is_infected = True
+                return True
+            else:
+                return False
     
 
     def print_info(self, printing=False):
@@ -47,16 +48,14 @@ class Home(Location):
     def __init__(self):
         super().__init__()
         self.name = "Home"
-        self.location_cure_rate = 100
+        self.location_cure_rate = 50
     
 
-    def is_cured_peep_roll(self):
+    def is_cured_peep_roll(self, infection_rate):
         if(self.is_infected):
-            result = random.randint(1, self.location_cure_rate)
+            irate = self.location_infection_rate/infection_rate + 1
+            result = random.randint(1, irate)
             if(result == 1):
-                # 1 in 100 chance the peep gets cured at this location
-                # peep took some meds and is feeling better
-                # return that this peep is cured
                 return True
             else:
                 return False
@@ -69,14 +68,14 @@ class Store(Location):
     def __init__(self):
         super().__init__()
         self.name = "Store"
-        self.location_infection_rate = 6
+        self.location_infection_rate = 10
 
 
     def is_infects_peep_roll(self, infection_rate):
         if(self.is_infected):
             irate = self.location_infection_rate/infection_rate + 1
             result = random.randint(1, irate)
-            if(result == self.location_infection_rate/2):
+            if(result == 1):
                 return True
             else:
                 return False
@@ -89,7 +88,7 @@ class Work(Location):
     def __init__(self):
         super().__init__()
         self.name = "Work"
-        self.location_infection_rate = 8
+        self.location_infection_rate = 16
 
 
     def is_infects_peep_roll(self, infection_rate):
@@ -111,7 +110,7 @@ class Park(Location):
     def __init__(self):
         super().__init__()
         self.name = "Park"
-        self.location_infection_rate = 10
+        self.location_infection_rate = 30
 
 
     def is_infects_peep_roll(self, infection_rate):
@@ -133,7 +132,7 @@ class Party(Location):
     def __init__(self):
         super().__init__()
         self.name = "Party"
-        self.location_infection_rate = 2
+        self.location_infection_rate = 4
 
 
     def is_infects_peep_roll(self, infection_rate):
@@ -155,8 +154,8 @@ class Hospital(Location):
     def __init__(self):
         super().__init__()
         self.name = "Hospital"
-        self.location_infection_rate = 50
-        self.location_cure_rate = 10
+        self.location_infection_rate = 20
+        self.location_cure_rate = 3
 
     
     def is_infects_peep_roll(self, infection_rate):
@@ -174,24 +173,31 @@ class Hospital(Location):
 
 
     def is_cured_peep_roll(self, infection_rate):
-        if(self.is_infected):
-            irate = self.location_cure_rate/infection_rate + 1
-            result = random.randint(1, irate)
-            if(result == 1):
-                # oeep gets cured at the hospital
-                return True
-            else:
-                return False
+        infection_rate = 0
+        irate = self.location_cure_rate
+        result = random.randint(1, irate)
+        if(result == 1):
+            # peep gets cured at the hospital
+            return True
         else:
             return False
 
 
 
-class PeepTown():
+class PeepTown:
     def __init__(self):
         self.peepHome = Home()
         self.groceryStore = Store()
         self.cityPark = Park()
         self.businessCenter = Work()
         self.nightClub = Party()
-        self.hospital = Hospital()
+        self.peepHospital = Hospital()
+
+
+    def update_location_info(self):
+        self.peepHome.location_info_updater()
+        self.groceryStore.location_info_updater()
+        self.cityPark.location_info_updater()
+        self.businessCenter.location_info_updater()
+        self.nightClub.location_info_updater()
+        self.peepHospital.location_info_updater()

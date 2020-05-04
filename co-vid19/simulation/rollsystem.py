@@ -41,6 +41,7 @@ class RollSystem:
         self.initialize_homebodypeeps(self.n_peeps)
         self.initialize_semihomiepeeps(self.n_peeps)
         self.initialize_outgoerpeeps(self.n_peeps)
+
         self.initialize_peeptown()
 
 
@@ -74,73 +75,70 @@ class RollSystem:
     def initialize_peeptown(self):
         self.peepTown = PeepTown()
     
-
-    def update_location_info(self):
-        self.peepTown.peepHome.location_info_updater()
-        self.peepTown.groceryStore.location_info_updater()
-        self.peepTown.cityPark.location_info_updater()
-        self.peepTown.businessCenter.location_info_updater()
-        self.peepTown.nightClub.location_info_updater()
-        self.peepTown.hospital.location_info_updater()
-    
     
     def print_single_location_info(self, store, printing=False):
         store.print_info(printing)
 
 
-    def location_roll_not_infected(self, location, peep, printing=False):
+    def roll_pinfect_loc(self, location, peep, printing=False):
         if(location.name == "Home"):
-            if(location.is_cured_peep_roll() == True):
-                peep.is_infected = False
+            if(location.is_cured_peep_roll(peep.infection_rate) == True):
+                peep.health_regained()
+            else:
+                peep.is_infected = True
 
         elif(location.name == "Hospital"):
             if(location.is_cured_peep_roll(peep.infection_rate) == True):
-                peep.infected = False
+                peep.health_regained()
 
-                if(location.is_infected == True):
-                    if(location.is_infects_peep_roll()):
-                        peep.is_infected = True
-
+                if(location.is_infected):
+                    peep.is_infected = location.is_infects_peep_roll(peep.infection_rate)
+                else:
+                    pass
+            else:
+                peep.is_infected = True
         else:
             if(location.is_infected == False):
-                location.location_infection_roll()
-                if(location.is_infected == True):
-                    self.print_single_location_info(location, printing)
+                location.is_infected = location.is_location_infection_roll()
+            else:
+                pass
 
-    def location_roll_is_infected(self, location, peep, printing=False):
-        if(location.is_infected == True):
-            peep.is_infected = location.is_infects_peep_roll(peep.infection_rate)
+
+    def roll_pnotinfect_loc(self, location, peep, printing=False):
+        if(location.is_infected):
+            if(location.is_infects_peep_roll(peep.infection_rate)):
+                peep.contracts_virus()
 
 
     def peep_roll_handler(self, peep):
         # Handles the peep during a roll
         if(peep.is_infected == True):
             if(peep.current_position == "Home"):
-                self.location_roll_not_infected(self.peepTown.peepHome, peep)
+                self.roll_pinfect_loc(self.peepTown.peepHome, peep)
             elif(peep.current_position == "Store"):
-                self.location_roll_not_infected(self.peepTown.groceryStore, peep)
+                self.roll_pinfect_loc(self.peepTown.groceryStore, peep)
             elif(peep.current_position == "Work"):
-                self.location_roll_not_infected(self.peepTown.businessCenter, peep)
+                self.roll_pinfect_loc(self.peepTown.businessCenter, peep)
             elif(peep.current_position == "Park"):
-                self.location_roll_not_infected(self.peepTown.cityPark, peep)
+                self.roll_pinfect_loc(self.peepTown.cityPark, peep)
             elif(peep.current_position == "Party"):
-                self.location_roll_not_infected(self.peepTown.nightClub, peep)
+                self.roll_pinfect_loc(self.peepTown.nightClub, peep)
             elif(peep.current_position == "Hospital"):
-                self.location_roll_not_infected(self.peepTown.hospital, peep)
+                self.roll_pinfect_loc(self.peepTown.peepHospital, peep)
 
         elif(peep.is_infected == False):
             if(peep.current_position == "Home"):
                pass
             elif(peep.current_position == "Store"):
-                self.location_roll_is_infected(self.peepTown.groceryStore, peep)
+                self.roll_pnotinfect_loc(self.peepTown.groceryStore, peep)
             elif(peep.current_position == "Work"):
-                self.location_roll_is_infected(self.peepTown.businessCenter, peep)
+                self.roll_pnotinfect_loc(self.peepTown.businessCenter, peep)
             elif(peep.current_position == "Park"):
-                self.location_roll_is_infected(self.peepTown.cityPark, peep)
+                self.roll_pnotinfect_loc(self.peepTown.cityPark, peep)
             elif(peep.current_position == "Party"):
-                self.location_roll_is_infected(self.peepTown.nightClub, peep)
+                self.roll_pnotinfect_loc(self.peepTown.nightClub, peep)
             elif(peep.current_position == "Hospital"):
-                self.location_roll_is_infected(self.peepTown.hospital, peep)                
+                self.roll_pnotinfect_loc(self.peepTown.peepHospital, peep)                
 
         if(peep.is_already_infected == False):
             if(peep.is_infected == True):
@@ -174,8 +172,8 @@ class RollSystem:
             # print(f'Roll Number: {i}')
             for peep in range(self.n_peeps):
                 # start off with the location rolls
-                self.update_location_info()
-                
+                self.peepTown.update_location_info()
+
                 current_homie_peep = self.homebodypeeps[peep]
                 if(current_homie_peep.is_alive):
                     current_homie_peep.roll()
@@ -200,7 +198,7 @@ class RollSystem:
                     self.death_toll_handler_outgoers(current_outgo_peep)
                     self.infection_toll_handler(current_outgo_peep)
 
-        self.print_location_info()
+        # self.print_location_info()
 
 
     def get_total_statistics(self):
@@ -216,18 +214,20 @@ class RollSystem:
         self.print_total_statistics()
 
 
-    def print_location_info(self):
-        self.peepTown.peepHome.print_info(True)
-        self.peepTown.groceryStore.print_info(True)
-        self.peepTown.cityPark.print_info(True)
-        self.peepTown.businessCenter.print_info(True)
-        self.peepTown.nightClub.print_info(True)
-        self.peepTown.hospital.print_info(True)
+    def print_location_info(self, printing=False):
+        self.peepTown.peepHome.print_info(printing)
+        self.peepTown.groceryStore.print_info(printing)
+        self.peepTown.cityPark.print_info(printing)
+        self.peepTown.businessCenter.print_info(printing)
+        self.peepTown.nightClub.print_info(printing)
+        self.peepTown.peepHospital.print_info(printing)
 
 
     def print_total_statistics(self):
         print("===========================")
         print(f'Statistics')
+        print(f'- Total Number of Peeps: {self.n_peeps * 3}')
+        print(f'- Total Number of Rolls: {self.n_rolls}')
         print(f'- Number of Infected Peeps: {self.infection_toll_total}')
 
         print(f'- Death Toll: {self.death_toll_total}')
@@ -245,7 +245,21 @@ class RollSystem:
 
         print('')
 
+    def write_statistics_to_file(self):
+        f = open(f"data/peepdata_p{self.n_peeps}_r{self.n_rolls}.csv", "a+")
+
+        f.write("{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f},{:0.2f}\n".format(
+                self.n_peeps*3, self.n_rolls,
+                self.infection_toll_total, self.death_toll_total, self.death_toll_homebodypeeps,
+                self.death_toll_semihomiespeeps, self.death_toll_outgoerpeeps, self.per_homebodypeeps_dead,
+                self.per_semihomiespeeps_dead, self.per_outgoerpeeps_dead, self.per_homebodypeeps_live,
+                self.per_semihomiespeeps_live, self.per_outgoerpeeps_live
+        ))
+
+        f.close()
+
     
     def run_program(self):
         self.run_roll()
         self.get_total_statistics()
+        self.write_statistics_to_file()

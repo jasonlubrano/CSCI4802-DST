@@ -15,6 +15,17 @@ class Peep:
         self.is_printing_info = False
         self.behavior = "base"
 
+    
+    def contracts_virus(self):
+        self.is_infected = True
+        self.roll_sickness()
+
+
+    def health_regained(self):
+        self.is_infected = False
+        self.sickness_level = 999
+        self.n_supplies = 14
+
 
     def roll_sickness(self):
         if(self.is_infected):
@@ -28,6 +39,8 @@ class Peep:
                     self.kill_peep()
                 else:
                     self.sickness_level = self.sickness_level - 1
+            else:
+                self.sickness_level = 999
 
 
     def subtract_supplies(self):
@@ -70,12 +83,20 @@ class Peep:
         if(self.is_printing_info == True or printing):
             print("")
 
+    
+    def randomly_infect(self):
+        # a random number of these unlucky boys will be infected
+        rand = random.randint(1,100)
+        if(rand <= 5):
+            self.contracts_virus()
+
 
     def kill_peep(self):
-        print("X.X    X.X    X.X    X.X")
+        if(self.is_printing_info):
+            print("X.X    X.X    X.X    X.X")
         self.is_alive = False
         self.is_printing_info = False
-        self.print_info(True)
+        self.print_info()
 
 
 
@@ -87,6 +108,7 @@ class HomebodyPeep(Peep):
         self.infection_rate = 2 # times a two factor for homebody peeps bc they always buy max supplies
         self.behavior = "HomebodyPeep"
         self.max_supplies = 14
+        self.randomly_infect()
 
 
     def print_info(self, printing=False):
@@ -114,7 +136,8 @@ class HomebodyPeep(Peep):
     def roll(self):
         if(self.is_alive):
             self.subtract_supplies()
-            self.subtract_sickness()
+            if(self.is_infected):
+                self.subtract_sickness()
 
         if(self.is_alive):
             if(self.is_infected == False):
@@ -125,7 +148,10 @@ class HomebodyPeep(Peep):
                         self.go_home()
 
                 elif(self.current_position == "Store"):
-                    self.go_home()
+                    if(self.is_needing_supplies()):
+                        self.go_to_store()
+                    else:
+                        self.go_home()
                 
                 elif(self.current_position == "Hospital"):
                     if(self.is_needing_supplies()):
@@ -146,6 +172,8 @@ class HomebodyPeep(Peep):
                 elif(self.current_position == "Store"):
                     if(self.is_needing_hospital()):
                         self.go_to_hospital()
+                    elif(self.is_needing_supplies()):
+                        self.go_to_store()
                     else:
                         self.go_home()
                 
@@ -167,6 +195,7 @@ class SemiHomiePeep(Peep):
         self.rolls_to_work = 5
         self.infection_rate = 1
         self.behavior = "SemiHomiePeep"
+        self.randomly_infect()
 
 
     def print_info(self, printing=False):
@@ -202,7 +231,6 @@ class SemiHomiePeep(Peep):
     def go_to_work(self):
         # tells the peep to go to work for a roll
         self.current_position = "Work"
-        self.went_to_work = True
         self.rolls_to_work = self.rolls_to_work - 1
 
 
@@ -210,6 +238,7 @@ class SemiHomiePeep(Peep):
         if(self.rolls_to_work > 0):
             return True
         else:
+            self.rolls_to_work = 5
             return False
 
 
@@ -223,7 +252,8 @@ class SemiHomiePeep(Peep):
     def roll(self):
         if(self.is_alive):
             self.subtract_supplies()
-            self.subtract_sickness()
+            if(self.is_infected):
+                self.subtract_sickness()
 
         if(self.is_alive):            
             if(self.is_infected == False):
@@ -305,16 +335,7 @@ class OutGoerPeep(Peep):
         self.rolls_to_work = 3
         self.infection_rate = 1
         self.behavior = "OutGoerPeep"
-
         self.randomly_infect()
-
-
-    def randomly_infect(self):
-        # a random number of these unlucky boys will be infected
-        rand = random.randint(1,100)
-        if(rand == 10):
-            self.is_infected = True
-            self.roll_sickness()
 
 
     def print_info(self, printing=False):
@@ -363,6 +384,7 @@ class OutGoerPeep(Peep):
         if(self.rolls_to_work > 0):
             return True
         else:
+            self.rolls_to_work = 3
             return False
 
 
@@ -376,9 +398,10 @@ class OutGoerPeep(Peep):
     def roll(self):
         if(self.is_alive):
             self.subtract_supplies()
-            self.subtract_sickness()
+            if(self.is_infected):
+                self.subtract_sickness()
             
-        if(self.is_alive):            
+        if(self.is_alive):
             if(self.is_infected == False or self.is_infected == True):
                 if(self.current_position == "Home"):
                     if(self.is_needing_hospital()):
